@@ -45,6 +45,7 @@
   });
   document.getElementById('menu-btn').addEventListener('click', () => {
     document.getElementById('finish').classList.remove('show');
+    document.getElementById('touch-controls').classList.remove('show');
     document.getElementById('menu').classList.add('show');
     game.state = 'menu';
     renderCity(game.city || cities[0]);

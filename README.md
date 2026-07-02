@@ -14,10 +14,16 @@ No build step. Just open `index.html` in a browser, or serve the folder:
 python3 -m http.server 8000   # then visit http://localhost:8000
 ```
 
-**Controls:** Arrow keys / WASD to drive, Space for the handbrake (drift the
-mountain hairpins!). On touch devices, on-screen buttons appear. Slow down inside
-a highlight's ring to trigger its question — answer correctly to drive on. Wrong
-answers cost +5 seconds.
+**Controls:**
+- *Desktop:* Arrow keys / WASD to drive, Space for the handbrake (drift the
+  mountain hairpins!).
+- *Phone (best in landscape):* a two-thumb layout — drag your **left thumb**
+  anywhere on the left to steer (analog: a little for gentle curves, a lot to
+  throw it into a slide), and use the **GAS / BRAKE / DRIFT** pedals on the
+  right. Light haptics on drift and correct answers.
+
+Slow down inside a highlight's ring to trigger its question — answer correctly to
+drive on. Wrong answers cost +5 seconds.
 
 ## How it works
 

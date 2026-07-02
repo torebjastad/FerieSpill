@@ -34,6 +34,7 @@ class Quiz {
         if (!this.active) return;
         if (idx === answer) {
           btn.classList.add('correct');
+          if (navigator.vibrate) { try { navigator.vibrate([15, 40, 15]); } catch (e) { /* ignore */ } }
           this.feedbackEl.textContent = 'Correct! Drive on.';
           this.feedbackEl.className = 'quiz-feedback ok';
           this.active = false;

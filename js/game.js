@@ -51,6 +51,7 @@ class Game {
     document.getElementById('menu').classList.remove('show');
     document.getElementById('finish').classList.remove('show');
     document.getElementById('hud').classList.add('show');
+    document.getElementById('touch-controls').classList.add('show');
     this._updateHud();
   }
 
@@ -110,6 +111,7 @@ class Game {
   _finish() {
     this.state = 'finished';
     document.getElementById('hud').classList.remove('show');
+    document.getElementById('touch-controls').classList.remove('show');
     const timeStr = Utils.formatTime(this.elapsed);
     document.getElementById('finish-time').textContent = timeStr;
 
@@ -182,15 +184,15 @@ class Game {
   _drawSpeedo(ctx) {
     const kmh = Math.round(this.car.speed / 3.4);
     ctx.save();
-    ctx.font = 'bold 30px sans-serif';
-    ctx.textAlign = 'right';
+    ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
+    ctx.font = 'bold 28px sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.fillText(kmh + ' km/h', this.vw - 20, this.vh - 16);
+    ctx.fillText(kmh + ' km/h', this.vw / 2, this.vh - 14);
     if (this.car.drifting) {
       ctx.fillStyle = '#ffd23a';
       ctx.font = 'bold 18px sans-serif';
-      ctx.fillText('DRIFT!', this.vw - 20, this.vh - 50);
+      ctx.fillText('DRIFT!', this.vw / 2, this.vh - 46);
     }
     ctx.restore();
   }

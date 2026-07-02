@@ -20,16 +20,19 @@
     </div>
   </div>
 
-  <!-- On-screen touch controls -->
-  <div id="touch-controls">
-    <div class="touch-cluster left">
-      <button id="btn-left" class="tbtn">◀</button>
-      <button id="btn-right" class="tbtn">▶</button>
+  <!-- On-screen touch controls (analog steering pad + pedals) -->
+  <div id="touch-controls" aria-hidden="true">
+    <div id="steer-zone">
+      <div id="steer-base"></div>
+      <div id="steer-knob"></div>
+      <div class="steer-hint">◀ &nbsp;drag to steer&nbsp; ▶</div>
     </div>
-    <div class="touch-cluster right">
-      <button id="btn-brake" class="tbtn small">⎵</button>
-      <button id="btn-down" class="tbtn">▼</button>
-      <button id="btn-up" class="tbtn gas">▲</button>
+    <div id="pedals">
+      <div class="pedal-row">
+        <button id="btn-brake" class="pedal brake"><span class="glyph">▼</span>BRAKE</button>
+        <button id="btn-hand" class="pedal hand"><span class="glyph">✦</span>DRIFT</button>
+      </div>
+      <button id="btn-gas" class="pedal gas"><span class="glyph">▲</span>GAS</button>
     </div>
   </div>
 
@@ -49,8 +52,12 @@
       <ul id="city-highlights" class="highlight-list"></ul>
 
       <div class="controls-help">
-        <strong>Controls:</strong> Arrows / WASD to drive · Space to handbrake
-        (drift!). Slow down inside a highlight ring to trigger its question.
+        <strong class="desktop-only">Keyboard:</strong>
+        <span class="desktop-only">Arrows / WASD to drive · Space to handbrake (drift!).</span>
+        <strong class="touch-only">On your phone:</strong>
+        <span class="touch-only">left thumb drags to steer, right thumb for GAS / BRAKE / DRIFT.
+        Best played in landscape.</span>
+        Slow down inside a highlight ring to trigger its question.
       </div>
 
       <button id="start-btn" class="primary">Start driving</button>
