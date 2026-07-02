@@ -5,11 +5,15 @@ class Track {
   constructor(city) {
     this.city = city;
     this.roadWidth = city.roadWidth || 70;
-    this.centerline = this._buildSpline(city.waypoints, 16);
+    this._segsPer = 16;
+    this.centerline = this._buildSpline(city.waypoints, this._segsPer);
 
-    // Start = first sample; heading toward the next sample.
-    const a = this.centerline[0];
-    const b = this.centerline[3];
+    // Start line sits at a chosen waypoint (default 0), pointing along the loop.
+    // `startIndex` lets a city place the line on a stretch clear of highlights.
+    const n = this.centerline.length;
+    this.startSample = ((city.startIndex || 0) * this._segsPer) % n;
+    const a = this.centerline[this.startSample];
+    const b = this.centerline[(this.startSample + 3) % n];
     this.start = { x: a.x, y: a.y };
     this.startHeading = Math.atan2(b.y - a.y, b.x - a.x);
 
@@ -122,9 +126,7 @@ class Track {
 
   _drawStart(ctx) {
     // Checkered start/finish band across the road at the start point.
-    const a = this.centerline[0];
-    const dir = { x: Math.cos(this.startHeading), y: Math.sin(this.startHeading) };
-    const perp = { x: -dir.y, y: dir.x };
+    const a = this.start;
     const hw = this.roadWidth / 2;
     const cell = hw / 3;
     ctx.save();
@@ -137,7 +139,6 @@ class Track {
       }
     }
     ctx.restore();
-    void perp;
   }
 
   drawHighlights(ctx, visited, allVisited, time) {

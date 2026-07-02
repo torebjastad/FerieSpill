@@ -4,7 +4,9 @@ A top-down webpage car game about **exploring a city and the areas around it**.
 Race a loop track that strings together the city's highlights — visit every one,
 answer a question about it, then drive back to **START** as fast as you can.
 
-First stop: **Bergen, Norway** 🇳🇴 (the fjord, Bryggen, Fløyen, Ulriken and more).
+Cities: **Bergen** 🇳🇴 (the fjord, Bryggen, Fløyen, Ulriken…) and **Stavanger**
+🇳🇴 (the old town, Sverd i fjell, Preikestolen, the Lysefjord…). Each highlight
+has a pool of questions picked at random, and wrong answers cost +5 seconds.
 
 ## Play
 
@@ -23,7 +25,8 @@ python3 -m http.server 8000   # then visit http://localhost:8000
   right. Light haptics on drift and correct answers.
 
 Slow down inside a highlight's ring to trigger its question — answer correctly to
-drive on. Wrong answers cost +5 seconds.
+drive on. Each visit draws a random question from that highlight's pool (options
+shuffled), and every wrong answer adds +5 seconds to your time.
 
 ## How it works
 

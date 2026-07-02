@@ -14,9 +14,12 @@ game is data-driven so more cities can be added later.
 - Loop track, viewed top-down. The whole track is **not** always on screen — the
   camera pans/follows the car, with a minimap for orientation.
 - Visit every highlight (any order). Reaching one and slowing down opens a quiz.
-- Answer the quiz correctly to unlock the highlight. A wrong answer adds a time
-  penalty so knowing the facts pays off.
-- Once all highlights are visited, drive back to START to finish. Best time wins.
+- Each highlight has a **pool** of questions; one is picked at random per visit
+  and the answer options are shuffled, so runs can't be memorised.
+- Answer correctly to unlock the highlight. Every wrong answer adds a **+5s time
+  penalty** (shown live and broken out on the finish screen) so facts pay off.
+- Once all highlights are visited, drive back to START to finish. Best time
+  (drive time + penalties) is saved per city. Cities shipped: Bergen, Stavanger.
 
 ## Driving feel (physics)
 
@@ -65,13 +68,15 @@ js/
   id, name, country, description,
   theme: { land, sea, water, road, roadLine, ... },   // colors
   roadWidth,
+  startIndex,                        // optional waypoint for the start line
+                                     // (pick a stretch clear of highlights)
   waypoints: [ {x, y}, ... ],        // closed loop centerline (Catmull-Rom)
-  water:   [ [ {x,y}, ... ], ... ],  // filled polygons (fjord, harbour, lakes)
+  water:   [ { type:'sea'|'water'|'lake', points:[{x,y},...] }, ... ],
   parks:   [ [ {x,y}, ... ], ... ],
   buildings: [ {x,y,w,h,color?}, ... ],
   highlights: [
     { id, name, x, y, radius, blurb,
-      question: { q, options:[...], answer: <index> } },
+      questions: [ { q, options:[...], answer: <index> }, ... ] },  // a pool
     ...
   ]
 }

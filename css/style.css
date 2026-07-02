@@ -39,6 +39,20 @@ html, body {
 .hud-label { font-size: 13px; color: #9fb2c2; text-transform: uppercase; letter-spacing: 0.06em; }
 .hud-value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .hud-hint { margin-top: 8px; font-size: 13px; color: #ffd98a; }
+.hud-value.penalty { color: #ff6b6b; }
+
+#penalty-pop {
+  position: absolute; top: 10px; left: 232px;
+  font-size: 30px; font-weight: 800; color: #ff6b6b;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  opacity: 0; pointer-events: none;
+}
+#penalty-pop.show { animation: penaltyPop 0.9s ease-out; }
+@keyframes penaltyPop {
+  0% { opacity: 0; transform: translateY(6px) scale(0.8); }
+  25% { opacity: 1; transform: translateY(-2px) scale(1.1); }
+  100% { opacity: 0; transform: translateY(-26px) scale(1); }
+}
 
 /* ---- overlays / panels ---- */
 .overlay {
@@ -100,6 +114,7 @@ button.primary:active, button.secondary:active { transform: scale(0.98); }
   letter-spacing: 0.06em; margin-top: 6px; }
 .finish-time { font-size: 46px; font-weight: 800; font-variant-numeric: tabular-nums;
   color: var(--accent); margin: 2px 0 4px; }
+.finish-penalty { color: #ff9a8a; font-size: 13px; margin: 2px 0 8px; min-height: 16px; }
 .finish-best { color: #ffd98a; margin-bottom: 20px; }
 
 /* ---- quiz ---- */

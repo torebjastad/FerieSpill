@@ -114,56 +114,73 @@ window.CITIES.bergen = {
       x: 962, y: 792, radius: 110,
       blurb: 'A meeting place for merchants and fishermen since the 1200s, ' +
              'and one of Norway’s most visited outdoor markets.',
-      question: {
-        q: 'Roughly how many visitors does Bergen’s Fish Market draw each year?',
-        options: ['Over 1 million', 'About 10,000', 'About 100,000', 'About 50 million'],
-        answer: 0
-      }
+      questions: [
+        { q: 'Roughly how many visitors does Bergen’s Fish Market draw each year?',
+          options: ['Over 1 million', 'About 10,000', 'About 100,000', 'About 50 million'],
+          answer: 0 },
+        { q: 'Since roughly which century has fish been traded at this market?',
+          options: ['The 1200s', 'The 1500s', 'The 1700s', 'The 1900s'], answer: 0 },
+        { q: 'At the head of which harbour does the Fish Market sit?',
+          options: ['Vågen', 'Oslofjorden', 'Geirangerfjord', 'Hardangerfjord'], answer: 0 }
+      ]
     },
     {
       id: 'bryggen', name: 'Bryggen',
       x: 1222, y: 540, radius: 110,
       blurb: 'The old wooden Hanseatic wharf, a UNESCO World Heritage Site and ' +
              'the postcard face of Bergen.',
-      question: {
-        q: 'Bryggen’s colourful wharf houses were built by merchants of which trading league?',
-        options: ['The Hanseatic League', 'The Dutch East India Company',
-                  'A Viking guild', 'The Roman Empire'],
-        answer: 0
-      }
+      questions: [
+        { q: 'Bryggen’s colourful wharf houses were built by merchants of which trading league?',
+          options: ['The Hanseatic League', 'The Dutch East India Company',
+                    'A Viking guild', 'The Roman Empire'], answer: 0 },
+        { q: 'In which year was Bryggen inscribed on the UNESCO World Heritage List?',
+          options: ['1979', '1918', '1702', '2000'], answer: 0 },
+        { q: 'Much of Bryggen was rebuilt after a great fire in which year?',
+          options: ['1702', '1349', '1855', '1916'], answer: 0 }
+      ]
     },
     {
       id: 'bergenhus', name: 'Bergenhus Festning',
       x: 908, y: 252, radius: 110,
       blurb: 'One of Norway’s oldest and best-preserved fortresses, guarding ' +
              'the mouth of the harbour since the Middle Ages.',
-      question: {
-        q: 'What is the great medieval royal hall at Bergenhus, built for King Håkon Håkonsson, called?',
-        options: ['Håkonshallen', 'Holmenkollen', 'Frognerhallen', 'Nidarosdomen'],
-        answer: 0
-      }
+      questions: [
+        { q: 'What is the great medieval royal hall at Bergenhus, built for King Håkon Håkonsson, called?',
+          options: ['Håkonshallen', 'Holmenkollen', 'Frognerhallen', 'Nidarosdomen'], answer: 0 },
+        { q: 'Which medieval defensive tower stands at Bergenhus Fortress?',
+          options: ['The Rosenkrantz Tower', 'The Round Tower', 'The Eiffel Tower',
+                    'The White Tower'], answer: 0 },
+        { q: 'From roughly which century does Håkon’s Hall date?',
+          options: ['13th century', '9th century', '18th century', '20th century'], answer: 0 }
+      ]
     },
     {
       id: 'floyen', name: 'Fløyen',
       x: 1652, y: 382, radius: 115,
       blurb: 'A 400 m mountain right above town, reached by the Fløibanen ' +
              'funicular for sweeping views over the city and fjord.',
-      question: {
-        q: 'In which year did the Fløibanen funicular up Mount Fløyen open?',
-        options: ['1918', '1885', '1950', '2001'],
-        answer: 0
-      }
+      questions: [
+        { q: 'In which year did the Fløibanen funicular up Mount Fløyen open?',
+          options: ['1918', '1885', '1950', '2001'], answer: 0 },
+        { q: 'What kind of railway carries visitors up Mount Fløyen?',
+          options: ['A funicular', 'A cog railway', 'A monorail', 'A steam train'], answer: 0 },
+        { q: 'About how high is Mount Fløyen?',
+          options: ['400 m', '150 m', '643 m', '1000 m'], answer: 0 }
+      ]
     },
     {
       id: 'ulriken', name: 'Ulriken',
       x: 1892, y: 1058, radius: 115,
       blurb: 'The highest of Bergen’s seven city mountains, topped by a cable ' +
              'car station and a TV mast.',
-      question: {
-        q: 'Ulriken is the highest of the seven city mountains. About how tall is it?',
-        options: ['643 m', '320 m', '200 m', '1500 m'],
-        answer: 0
-      }
+      questions: [
+        { q: 'Ulriken is the highest of the seven city mountains. About how tall is it?',
+          options: ['643 m', '320 m', '200 m', '1500 m'], answer: 0 },
+        { q: 'How do visitors usually reach the top of Ulriken?',
+          options: ['By cable car', 'By funicular', 'By escalator', 'By ski lift'], answer: 0 },
+        { q: 'Ulriken is the tallest of Bergen’s how many city mountains?',
+          options: ['Seven', 'Three', 'Ten', 'Two'], answer: 0 }
+      ]
     },
     {
       id: 'kode', name: 'KODE & Lille Lungegårdsvann',
@@ -171,11 +188,14 @@ window.CITIES.bergen = {
       blurb: 'The cultural heart of town: the KODE art museums sit by the little ' +
              'octagonal lake, holding a large collection tied to Bergen’s ' +
              'famous composer.',
-      question: {
-        q: 'Which world-famous composer was born in Bergen?',
-        options: ['Edvard Grieg', 'Edvard Munch', 'Henrik Ibsen', 'Roald Amundsen'],
-        answer: 0
-      }
+      questions: [
+        { q: 'Which world-famous composer was born in Bergen?',
+          options: ['Edvard Grieg', 'Edvard Munch', 'Henrik Ibsen', 'Roald Amundsen'], answer: 0 },
+        { q: 'What is the name of Edvard Grieg’s villa near Bergen, now a museum?',
+          options: ['Troldhaugen', 'Holmenkollen', 'Frognerseteren', 'Vigeland'], answer: 0 },
+        { q: 'The KODE museums are among the largest for art and music in which region?',
+          options: ['The Nordic countries', 'South America', 'Africa', 'Australia'], answer: 0 }
+      ]
     }
   ]
 };

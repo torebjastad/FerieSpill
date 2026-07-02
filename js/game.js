@@ -15,7 +15,9 @@ class Game {
     this.minimap = null;
 
     this.visited = new Set();
+    this.armed = new Set();
     this.elapsed = 0;      // ms of driving time
+    this.penaltyMs = 0;    // ms added by wrong answers
     this.started = false;  // clock starts on first movement
     this.allVisited = false;
 
@@ -43,7 +45,9 @@ class Game {
     this.minimap = new Minimap(this.track);
     this.car = new Car(this.track.start.x, this.track.start.y, this.track.startHeading);
     this.visited = new Set();
+    this.armed = new Set();
     this.elapsed = 0;
+    this.penaltyMs = 0;
     this.started = false;
     this.allVisited = false;
     this.state = 'driving';
@@ -82,14 +86,17 @@ class Game {
   _checkHighlights() {
     if (this.quiz.active) return;
     for (const h of this.city.highlights) {
-      if (this.visited.has(h.id)) continue;
       const d = Utils.dist(this.car.pos.x, this.car.pos.y, h.x, h.y);
+      // A highlight only becomes triggerable once the car has been outside its
+      // ring, so spawning inside one never fires a quiz on the first frame.
+      if (d > h.radius + 8) this.armed.add(h.id);
+      if (this.visited.has(h.id) || !this.armed.has(h.id)) continue;
       // Must be in range AND slowed down (you have to actually stop by).
       if (d < h.radius && this.car.speed < 70) {
         this.state = 'quiz';
         this.quiz.open(h,
           () => { this.visited.add(h.id); this._afterQuiz(); },
-          () => { this.elapsed += 5000; });
+          () => { this.penaltyMs += Quiz.PENALTY_MS; this._flashPenalty(); });
         return;
       }
     }
@@ -108,23 +115,48 @@ class Game {
     if (d < 90) this._finish();
   }
 
+  total() { return this.elapsed + this.penaltyMs; }
+
+  _flashPenalty() {
+    const timeEl = document.getElementById('hud-time');
+    const popEl = document.getElementById('penalty-pop');
+    if (popEl) {
+      popEl.textContent = `+${Quiz.PENALTY_MS / 1000}s`;
+      popEl.classList.remove('show');
+      void popEl.offsetWidth; // restart the animation
+      popEl.classList.add('show');
+    }
+    if (timeEl) {
+      timeEl.classList.add('penalty');
+      setTimeout(() => timeEl.classList.remove('penalty'), 600);
+    }
+  }
+
   _finish() {
     this.state = 'finished';
     document.getElementById('hud').classList.remove('show');
     document.getElementById('touch-controls').classList.remove('show');
-    const timeStr = Utils.formatTime(this.elapsed);
-    document.getElementById('finish-time').textContent = timeStr;
+    const total = this.total();
+    document.getElementById('finish-time').textContent = Utils.formatTime(total);
+
+    // Penalty breakdown line.
+    const penEl = document.getElementById('finish-penalty');
+    if (penEl) {
+      penEl.textContent = this.penaltyMs > 0
+        ? `Includes +${Math.round(this.penaltyMs / 1000)}s in wrong-answer penalties`
+        : 'No penalties — a clean run!';
+    }
 
     // Best time per city in localStorage.
     let best = null;
     try {
       const key = 'feriespill.best.' + this.city.id;
       const prev = parseFloat(localStorage.getItem(key));
-      if (!prev || this.elapsed < prev) { localStorage.setItem(key, this.elapsed); best = this.elapsed; }
+      if (!prev || total < prev) { localStorage.setItem(key, total); best = total; }
       else best = prev;
     } catch (e) { /* storage may be unavailable */ }
     const bestEl = document.getElementById('finish-best');
-    bestEl.textContent = best != null ? Utils.formatTime(best) : timeStr;
+    bestEl.textContent = best != null ? Utils.formatTime(best) : Utils.formatTime(total);
 
     document.getElementById('finish').classList.add('show');
   }
@@ -133,7 +165,7 @@ class Game {
     const timeEl = document.getElementById('hud-time');
     const progEl = document.getElementById('hud-progress');
     const hintEl = document.getElementById('hud-hint');
-    if (timeEl) timeEl.textContent = Utils.formatTime(this.elapsed);
+    if (timeEl) timeEl.textContent = Utils.formatTime(this.total());
     if (progEl) progEl.textContent =
       `${this.visited.size} / ${this.city.highlights.length}`;
     if (hintEl) {
