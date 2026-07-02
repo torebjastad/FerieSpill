@@ -19,7 +19,7 @@ html, body {
   touch-action: none;
 }
 
-#game { display: block; position: fixed; inset: 0; }
+#game { display: block; position: fixed; inset: 0; touch-action: none; }
 
 /* ---- HUD ---- */
 #hud {

@@ -17,7 +17,79 @@ class Track {
     this.start = { x: a.x, y: a.y };
     this.startHeading = Math.atan2(b.y - a.y, b.x - a.x);
 
+    // Little "lollipop" side roads out to each highlight, so you can reach them
+    // on tarmac instead of driving across the grass.
+    this.sideWidth = this.roadWidth * 0.72;
+    this.sideRoads = this._buildSideRoads();
+
     this.bounds = this._computeBounds();
+  }
+
+  _nearestCenterlinePoint(p) {
+    const pts = this.centerline, n = pts.length;
+    let best = pts[0], bestD = Infinity;
+    for (let i = 0; i < n; i++) {
+      const a = pts[i], b = pts[(i + 1) % n];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const l2 = dx * dx + dy * dy || 1;
+      let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2;
+      t = Math.max(0, Math.min(1, t));
+      const cx = a.x + t * dx, cy = a.y + t * dy;
+      const d = Math.hypot(p.x - cx, p.y - cy);
+      if (d < bestD) { bestD = d; best = { x: cx, y: cy }; }
+    }
+    return best;
+  }
+
+  // Each side road is a spur from the main road out to a small loop (cul-de-sac)
+  // encircling the highlight, so you can drive in, trigger it, and loop back out.
+  _buildSideRoads() {
+    const rLoop = 50, segs = 22;
+    return this.city.highlights.map((h) => {
+      const p = this._nearestCenterlinePoint(h);
+      const len = Math.hypot(h.x - p.x, h.y - p.y) || 1;
+      const dx = (h.x - p.x) / len, dy = (h.y - p.y) / len;
+      const entry = { x: h.x - dx * rLoop, y: h.y - dy * rLoop };
+      const pts = [{ x: p.x, y: p.y }, entry];
+      const startAng = Math.atan2(entry.y - h.y, entry.x - h.x);
+      for (let i = 1; i <= segs; i++) {
+        const a = startAng + (i / segs) * Math.PI * 2;
+        pts.push({ x: h.x + Math.cos(a) * rLoop, y: h.y + Math.sin(a) * rLoop });
+      }
+      pts.push(entry, { x: p.x, y: p.y });
+      return { points: pts };
+    });
+  }
+
+  // Distance from a point to the main road centerline (with early-out).
+  distanceToRoad(pos) {
+    let min = Infinity;
+    const pts = this.centerline, n = pts.length;
+    for (let i = 0; i < n; i++) {
+      const a = pts[i], b = pts[(i + 1) % n];
+      const d = Utils.pointSegDist(pos.x, pos.y, a.x, a.y, b.x, b.y);
+      if (d < min) { min = d; if (min < this.roadWidth * 0.4) return min; }
+    }
+    return min;
+  }
+
+  distanceToSideRoad(pos) {
+    let min = Infinity;
+    for (const r of this.sideRoads) {
+      const pts = r.points;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const d = Utils.pointSegDist(pos.x, pos.y, pts[i].x, pts[i].y,
+          pts[i + 1].x, pts[i + 1].y);
+        if (d < min) { min = d; if (min < this.sideWidth * 0.4) return min; }
+      }
+    }
+    return min;
+  }
+
+  isOffRoad(pos) {
+    if (this.distanceToRoad(pos) <= this.roadWidth * 0.5) return false;
+    if (this.distanceToSideRoad(pos) <= this.sideWidth * 0.5) return false;
+    return true;
   }
 
   _buildSpline(pts, segsPer) {
@@ -44,20 +116,6 @@ class Track {
     return { minX: minX - m, minY: minY - m, maxX: maxX + m, maxY: maxY + m };
   }
 
-  // Distance from a point to the road centerline (with early-out).
-  distanceToRoad(pos) {
-    let min = Infinity;
-    const pts = this.centerline, n = pts.length;
-    for (let i = 0; i < n; i++) {
-      const a = pts[i], b = pts[(i + 1) % n];
-      const d = Utils.pointSegDist(pos.x, pos.y, a.x, a.y, b.x, b.y);
-      if (d < min) { min = d; if (min < this.roadWidth * 0.4) return min; }
-    }
-    return min;
-  }
-
-  isOffRoad(pos) { return this.distanceToRoad(pos) > this.roadWidth * 0.5; }
-
   // ---- rendering -----------------------------------------------------------
 
   draw(ctx, camera) {
@@ -79,9 +137,11 @@ class Track {
       this._fillPoly(ctx, w.points, col);
     });
 
-    // Skid marks (drawn under the road? no — under car, above road) handled by game.
+    // Side-road spurs first, so the main road overlays their junctions cleanly.
+    this.sideRoads.forEach((r) => this._strokePath(ctx, r.points, this.sideWidth + 8, t.roadEdge));
+    this.sideRoads.forEach((r) => this._strokePath(ctx, r.points, this.sideWidth, t.road));
 
-    // Road: dark edge, then tarmac, then dashed centre line.
+    // Main road: dark edge, then tarmac, then dashed centre line.
     this._strokeCenterline(ctx, this.roadWidth + 8, t.roadEdge);
     this._strokeCenterline(ctx, this.roadWidth, t.road);
     this._dashedCenterLine(ctx, t.roadLine);
@@ -95,6 +155,17 @@ class Track {
     });
 
     this._drawStart(ctx);
+  }
+
+  _strokePath(ctx, pts, width, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.stroke();
   }
 
   _strokeCenterline(ctx, width, color) {

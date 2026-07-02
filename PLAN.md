@@ -36,8 +36,17 @@ Arcade-realistic top-down model (world-space velocity, not just "point & move"):
      car **slides / drifts**.
 5. Handbrake drops grip hard (deliberate drifting); off-road (grass) lowers grip
    and adds drag, so cutting corners is punished.
+6. On the gas you keep steering authority even from a standstill, and flooring it
+   into a hard turn at low speed breaks traction (wheelspin) — so you can spin
+   the car around on the spot if you're pointing the wrong way.
 
 Tight mountain switchbacks up to Fløyen and Ulriken are where sliding matters.
+Each highlight has a little "lollipop" side road (a spur to a cul-de-sac loop),
+so you reach it on tarmac instead of driving across the grass.
+
+Touch input is hardened for iOS: steering/pedals are tracked on `window` with
+up/cancel/blur/visibility fallbacks (the stick can't freeze offset), and pinch /
+double-tap / gesture zoom are blocked (no getting stuck zoomed in).
 
 ## Architecture
 

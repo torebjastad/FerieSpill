@@ -1,7 +1,11 @@
 // Controls: keyboard on desktop, and an analog two-thumb touch layout on phones
 // (a floating steering pad on the left, GAS / BRAKE / DRIFT pedals on the right).
-// Pointer Events are used so left-thumb steering and right-thumb pedals work
-// simultaneously. Steering is analog (-1..1) to match the drift physics.
+//
+// Robustness notes: pointer tracking for steering is done on `window` (not via
+// element pointer-capture), and every pointer stream has window-level up/cancel
+// fallbacks plus a global reset on blur / tab-hide. This makes it impossible for
+// the stick or a pedal to "stick" in a pressed/offset state if iOS steals or
+// drops a pointer (e.g. when a system gesture interrupts the touch).
 class Input {
   constructor() {
     this.keys = {};
@@ -15,9 +19,16 @@ class Input {
     this.maxDrag = 105; // px of thumb travel for full lock
     this.deadZone = 6;
 
+    // Active touch pointers.
+    this._steerId = null;
+    this._steerOrigin = 0;
+    this._pedals = {};  // id -> { pointerId, release }
+
     this._bindKeyboard();
     this._bindSteering();
     this._bindPedals();
+    this._bindGlobalSafety();
+    this._installZoomGuards();
   }
 
   _bindKeyboard() {
@@ -35,16 +46,14 @@ class Input {
     if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) { /* ignore */ } }
   }
 
-  // Floating analog steering: touch anywhere in the left zone to plant the
-  // stick, then slide left/right to steer proportionally. Releasing recenters.
+  // Floating analog steering. Touch anywhere in the left zone to plant the
+  // stick; move/up/cancel are tracked on `window` so we never lose the release.
   _bindSteering() {
     const zone = document.getElementById('steer-zone');
     const base = document.getElementById('steer-base');
     const knob = document.getElementById('steer-knob');
     if (!zone) return;
-
-    let pointerId = null;
-    let originX = 0, originY = 0;
+    this._steerEls = { zone, base, knob };
 
     const place = (el, x, y) => {
       const r = zone.getBoundingClientRect();
@@ -53,58 +62,102 @@ class Input {
     };
 
     zone.addEventListener('pointerdown', (e) => {
-      if (pointerId !== null) return;
-      pointerId = e.pointerId;
-      try { zone.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
-      originX = e.clientX; originY = e.clientY;
-      place(base, originX, originY);
-      place(knob, originX, originY);
+      if (this._steerId !== null) return;
+      this._steerId = e.pointerId;
+      this._steerOrigin = e.clientX;
+      place(base, e.clientX, e.clientY);
+      place(knob, e.clientX, e.clientY);
       zone.classList.add('active');
       this._haptic(8);
       e.preventDefault();
     });
 
-    zone.addEventListener('pointermove', (e) => {
-      if (e.pointerId !== pointerId) return;
-      let dx = e.clientX - originX;
+    // Tracked on window so dragging outside the zone still updates/releases.
+    window.addEventListener('pointermove', (e) => {
+      if (e.pointerId !== this._steerId) return;
+      const dx = e.clientX - this._steerOrigin;
       const mag = Math.abs(dx) < this.deadZone ? 0 : dx;
       this.tSteer = Math.max(-1, Math.min(1, mag / this.maxDrag));
       const clamped = Math.max(-this.maxDrag, Math.min(this.maxDrag, dx));
-      place(knob, originX + clamped, originY);
-      e.preventDefault();
+      const r = zone.getBoundingClientRect();
+      knob.style.left = (this._steerOrigin + clamped - r.left) + 'px';
     });
+  }
 
-    const end = (e) => {
-      if (e.pointerId !== pointerId) return;
-      pointerId = null;
-      this.tSteer = 0;
-      zone.classList.remove('active');
-    };
-    zone.addEventListener('pointerup', end);
-    zone.addEventListener('pointercancel', end);
+  _releaseSteer() {
+    this._steerId = null;
+    this.tSteer = 0;
+    if (this._steerEls) this._steerEls.zone.classList.remove('active');
   }
 
   _bindPedals() {
-    this._pedal('btn-gas', () => { this.tGas = 1; }, () => { this.tGas = 0; });
-    this._pedal('btn-brake', () => { this.tBrake = 1; }, () => { this.tBrake = 0; });
-    this._pedal('btn-hand',
+    this._pedal('btn-gas', 'gas', () => { this.tGas = 1; }, () => { this.tGas = 0; });
+    this._pedal('btn-brake', 'brake', () => { this.tBrake = 1; }, () => { this.tBrake = 0; });
+    this._pedal('btn-hand', 'hand',
       () => { this.tHand = true; this._haptic(12); },
       () => { this.tHand = false; });
   }
 
-  _pedal(id, on, off) {
+  _pedal(id, key, on, off) {
     const el = document.getElementById(id);
     if (!el) return;
+    const release = () => { el.classList.remove('pressed'); off(); this._pedals[key] = null; };
+    this._pedals[key] = null;
     el.addEventListener('pointerdown', (e) => {
-      try { el.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+      this._pedals[key] = { pointerId: e.pointerId, el, release };
       el.classList.add('pressed');
       on();
       e.preventDefault();
     });
-    const up = (e) => { el.classList.remove('pressed'); off(); };
-    el.addEventListener('pointerup', up);
-    el.addEventListener('pointercancel', up);
-    el.addEventListener('pointerleave', up);
+  }
+
+  // Window-level fallbacks + a hard reset when focus/visibility is lost.
+  _bindGlobalSafety() {
+    const endPointer = (e) => {
+      if (e.pointerId === this._steerId) this._releaseSteer();
+      for (const key of Object.keys(this._pedals)) {
+        const p = this._pedals[key];
+        if (p && p.pointerId === e.pointerId) p.release();
+      }
+    };
+    window.addEventListener('pointerup', endPointer);
+    window.addEventListener('pointercancel', endPointer);
+    window.addEventListener('blur', () => this.resetTouch());
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) this.resetTouch();
+    });
+    window.addEventListener('pagehide', () => this.resetTouch());
+  }
+
+  // Zero every touch control and recentre the stick.
+  resetTouch() {
+    this._releaseSteer();
+    for (const key of Object.keys(this._pedals)) {
+      const p = this._pedals[key];
+      if (p) p.release();
+    }
+    this.tGas = 0; this.tBrake = 0; this.tHand = false;
+  }
+
+  // Stop iOS/Safari from pinch-, double-tap- or gesture-zooming the game (which
+  // can otherwise leave the player stuck zoomed in with no way back).
+  _installZoomGuards() {
+    const stop = (e) => e.preventDefault();
+    ['gesturestart', 'gesturechange', 'gestureend'].forEach((t) =>
+      document.addEventListener(t, stop, { passive: false }));
+    document.addEventListener('touchmove', (e) => {
+      if (e.touches && e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      // Suppress double-tap-to-zoom, but never on real controls/buttons.
+      if (now - lastTouchEnd <= 350 &&
+          !(e.target.closest && e.target.closest('button, select, a'))) {
+        e.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, { passive: false });
   }
 
   // Returns {throttle:-1..1, steer:-1..1, handbrake:bool}

@@ -14,7 +14,7 @@ class Car {
     this.reversePower = 300;
     this.brakePower = 1350;
     this.maxSpeed = 560;
-    this.maxTurn = 3.0;            // rad/s at full steer
+    this.maxTurn = 3.5;            // rad/s at full steer
 
     this.gripRoad = 8.0;           // lateral decay rate /s on tarmac
     this.gripOffRoad = 3.4;        // grass: slippery
@@ -28,22 +28,32 @@ class Car {
     this.lateral = 0;
     this.offRoad = false;
     this.drifting = false;
+    this.wheelspin = false;
     this.skidMarks = [];           // recent {x,y} while sliding
   }
 
   update(dt, input, offRoad) {
     this.offRoad = offRoad;
 
-    // 1. Steering rotates the heading. Needs some speed to bite, and eases off
-    //    at very high speed for stability.
+    // 1. Steering rotates the heading. Authority grows with speed and eases off
+    //    at very high speed for stability — but when you're on the gas you keep
+    //    a chunk of authority even from a standstill, so you can spin the car
+    //    around on the spot if you're pointing the wrong way.
     const speed = Math.hypot(this.vel.x, this.vel.y);
     let fwd = { x: Math.cos(this.heading), y: Math.sin(this.heading) };
     const goingForward = (this.vel.x * fwd.x + this.vel.y * fwd.y) >= -1;
-    const steerAuth = Utils.clamp(speed / 90, 0, 1) *
+    const accelerating = input.throttle > 0.15;
+    const speedAuth = Utils.clamp(speed / 90, 0, 1) *
       (1 - 0.35 * Utils.clamp((speed - 360) / 240, 0, 1));
+    const launchAuth = accelerating ? 0.75 : 0;
+    const steerAuth = Math.max(speedAuth, launchAuth);
     let turn = input.steer * this.maxTurn * steerAuth;
     if (!goingForward) turn = -turn; // reverse steering
     this.heading += turn * dt;
+
+    // Wheelspin: flooring it into a hard turn from low speed breaks traction,
+    // letting the car spin/skid (also great for a quick standstill 180).
+    this.wheelspin = accelerating && speed < 150 && Math.abs(input.steer) > 0.25;
 
     // 2. Rebuild basis with the new heading and decompose world velocity.
     fwd = { x: Math.cos(this.heading), y: Math.sin(this.heading) };
@@ -73,6 +83,7 @@ class Car {
     // 5. Grip bleeds off lateral velocity (the drift model).
     let grip = offRoad ? this.gripOffRoad : this.gripRoad;
     if (input.handbrake) grip = this.gripHandbrake;
+    else if (this.wheelspin) grip = Math.min(grip, this.gripHandbrake * 1.6);
     vRight *= Math.exp(-grip * dt);
 
     // 6. Recompose world velocity and integrate.
@@ -84,7 +95,7 @@ class Car {
     // Bookkeeping for HUD + effects.
     this.speed = Math.hypot(this.vel.x, this.vel.y);
     this.lateral = Math.abs(vRight);
-    this.drifting = this.lateral > 55 && this.speed > 60;
+    this.drifting = (this.lateral > 55 && this.speed > 60) || this.wheelspin;
 
     if (this.drifting || (this.offRoad && this.speed > 40)) {
       this.skidMarks.push({ x: this.pos.x, y: this.pos.y });

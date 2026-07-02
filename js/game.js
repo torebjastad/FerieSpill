@@ -51,6 +51,7 @@ class Game {
     this.started = false;
     this.allVisited = false;
     this.state = 'driving';
+    this.input.resetTouch();
     this.camera.snapTo(this.car.pos.x, this.car.pos.y);
     document.getElementById('menu').classList.remove('show');
     document.getElementById('finish').classList.remove('show');
@@ -94,6 +95,7 @@ class Game {
       // Must be in range AND slowed down (you have to actually stop by).
       if (d < h.radius && this.car.speed < 70) {
         this.state = 'quiz';
+        this.input.resetTouch();
         this.quiz.open(h,
           () => { this.visited.add(h.id); this._afterQuiz(); },
           () => { this.penaltyMs += Quiz.PENALTY_MS; this._flashPenalty(); });
