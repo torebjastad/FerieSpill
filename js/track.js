@@ -17,10 +17,14 @@ class Track {
     this.start = { x: a.x, y: a.y };
     this.startHeading = Math.atan2(b.y - a.y, b.x - a.x);
 
-    // Little "lollipop" side roads out to each highlight, so you can reach them
-    // on tarmac instead of driving across the grass.
-    this.sideWidth = this.roadWidth * 0.72;
-    this.sideRoads = this._buildSideRoads();
+    // Each highlight gets a wide tarmac "pad" (a plaza around the marker) joined
+    // to the main loop by a spur, so it's easy to drive onto and hard to miss.
+    this.padRadius = 96;
+    this.spurWidth = this.roadWidth;
+    this.pads = this.city.highlights.map((h) => ({ x: h.x, y: h.y }));
+    this.spurs = this.city.highlights.map((h) => ({
+      a: this._nearestCenterlinePoint(h), b: { x: h.x, y: h.y }
+    }));
 
     this.bounds = this._computeBounds();
   }
@@ -41,26 +45,6 @@ class Track {
     return best;
   }
 
-  // Each side road is a spur from the main road out to a small loop (cul-de-sac)
-  // encircling the highlight, so you can drive in, trigger it, and loop back out.
-  _buildSideRoads() {
-    const rLoop = 50, segs = 22;
-    return this.city.highlights.map((h) => {
-      const p = this._nearestCenterlinePoint(h);
-      const len = Math.hypot(h.x - p.x, h.y - p.y) || 1;
-      const dx = (h.x - p.x) / len, dy = (h.y - p.y) / len;
-      const entry = { x: h.x - dx * rLoop, y: h.y - dy * rLoop };
-      const pts = [{ x: p.x, y: p.y }, entry];
-      const startAng = Math.atan2(entry.y - h.y, entry.x - h.x);
-      for (let i = 1; i <= segs; i++) {
-        const a = startAng + (i / segs) * Math.PI * 2;
-        pts.push({ x: h.x + Math.cos(a) * rLoop, y: h.y + Math.sin(a) * rLoop });
-      }
-      pts.push(entry, { x: p.x, y: p.y });
-      return { points: pts };
-    });
-  }
-
   // Distance from a point to the main road centerline (with early-out).
   distanceToRoad(pos) {
     let min = Infinity;
@@ -73,22 +57,17 @@ class Track {
     return min;
   }
 
-  distanceToSideRoad(pos) {
-    let min = Infinity;
-    for (const r of this.sideRoads) {
-      const pts = r.points;
-      for (let i = 0; i < pts.length - 1; i++) {
-        const d = Utils.pointSegDist(pos.x, pos.y, pts[i].x, pts[i].y,
-          pts[i + 1].x, pts[i + 1].y);
-        if (d < min) { min = d; if (min < this.sideWidth * 0.4) return min; }
-      }
-    }
-    return min;
-  }
-
   isOffRoad(pos) {
     if (this.distanceToRoad(pos) <= this.roadWidth * 0.5) return false;
-    if (this.distanceToSideRoad(pos) <= this.sideWidth * 0.5) return false;
+    // On a highlight pad?
+    for (const p of this.pads) {
+      if (Math.hypot(pos.x - p.x, pos.y - p.y) <= this.padRadius) return false;
+    }
+    // On a spur?
+    for (const s of this.spurs) {
+      if (Utils.pointSegDist(pos.x, pos.y, s.a.x, s.a.y, s.b.x, s.b.y)
+        <= this.spurWidth * 0.5) return false;
+    }
     return true;
   }
 
@@ -137,9 +116,12 @@ class Track {
       this._fillPoly(ctx, w.points, col);
     });
 
-    // Side-road spurs first, so the main road overlays their junctions cleanly.
-    this.sideRoads.forEach((r) => this._strokePath(ctx, r.points, this.sideWidth + 8, t.roadEdge));
-    this.sideRoads.forEach((r) => this._strokePath(ctx, r.points, this.sideWidth, t.road));
+    // Highlight pads + spurs first, so the main road overlays junctions cleanly.
+    // Edges (dark) for everything, then tarmac fill for everything.
+    this.spurs.forEach((s) => this._strokePath(ctx, [s.a, s.b], this.spurWidth + 8, t.roadEdge));
+    this.pads.forEach((p) => this._fillCircle(ctx, p.x, p.y, this.padRadius + 4, t.roadEdge));
+    this.spurs.forEach((s) => this._strokePath(ctx, [s.a, s.b], this.spurWidth, t.road));
+    this.pads.forEach((p) => this._fillCircle(ctx, p.x, p.y, this.padRadius, t.road));
 
     // Main road: dark edge, then tarmac, then dashed centre line.
     this._strokeCenterline(ctx, this.roadWidth + 8, t.roadEdge);
@@ -155,6 +137,13 @@ class Track {
     });
 
     this._drawStart(ctx);
+  }
+
+  _fillCircle(ctx, x, y, r, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   _strokePath(ctx, pts, width, color) {

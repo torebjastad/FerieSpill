@@ -41,8 +41,11 @@ Arcade-realistic top-down model (world-space velocity, not just "point & move"):
    the car around on the spot if you're pointing the wrong way.
 
 Tight mountain switchbacks up to Fløyen and Ulriken are where sliding matters.
-Each highlight has a little "lollipop" side road (a spur to a cul-de-sac loop),
-so you reach it on tarmac instead of driving across the grass.
+Maps are scaled up (`MAP_SCALE`) so there's a real stretch of road — and time to
+get up to speed — between highlights. Each highlight sits on a wide tarmac
+**pad** joined to the loop by a spur, so it's easy to drive onto without going
+off-road. A heads-up banner + an edge-of-screen arrow point to the next target
+(nearest unvisited highlight, or START once all are done).
 
 Touch input is hardened for iOS: steering/pedals are tracked on `window` with
 up/cancel/blur/visibility fallbacks (the stick can't freeze offset), and pinch /

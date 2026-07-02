@@ -54,6 +54,26 @@ html, body {
   100% { opacity: 0; transform: translateY(-26px) scale(1); }
 }
 
+/* ---- "highlight ahead" heads-up ---- */
+#ahead {
+  position: fixed; top: 16px; left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background: rgba(18, 22, 28, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px; padding: 8px 16px;
+  display: flex; gap: 8px; align-items: center;
+  font-size: 15px; font-weight: 700; white-space: nowrap;
+  max-width: 76vw; overflow: hidden;
+  opacity: 0; transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none; z-index: 6;
+}
+#ahead.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#ahead .ahead-label { color: #ffcf3a; letter-spacing: 0.04em; }
+#ahead .ahead-dist { color: #9fb2c2; font-weight: 600; }
+#ahead.near { border-color: #ffcf3a; }
+#ahead.near .ahead-label { animation: aheadBlink 0.55s ease-in-out infinite; }
+@keyframes aheadBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
 /* ---- overlays / panels ---- */
 .overlay {
   position: fixed; inset: 0;

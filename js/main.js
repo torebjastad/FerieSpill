@@ -1,11 +1,30 @@
 // Bootstrap: build the city picker on the menu, wire the buttons, create the
 // game.
+
+// Spread each map out (all coordinates scaled about the origin) so there's a
+// proper stretch of road — and time to get up to speed — between highlights.
+// A per-city `scale` overrides this default.
+const MAP_SCALE = 1.85;
+function scaleCity(city) {
+  const s = city.scale || MAP_SCALE;
+  if (city._scaled || s === 1) return;
+  const sp = (p) => ({ x: p.x * s, y: p.y * s });
+  city.waypoints = city.waypoints.map(sp);
+  (city.water || []).forEach((w) => { w.points = w.points.map(sp); });
+  city.parks = (city.parks || []).map((poly) => poly.map(sp));
+  city.buildings = (city.buildings || []).map((b) =>
+    Object.assign({}, b, { x: b.x * s, y: b.y * s, w: b.w * s, h: b.h * s }));
+  city.highlights.forEach((h) => { h.x *= s; h.y *= s; });
+  city._scaled = true;
+}
+
 (function () {
   const canvas = document.getElementById('game');
   const game = new Game(canvas);
   window.__game = game; // exposed for debugging / automated smoke tests
 
   const cities = Object.values(window.CITIES || {});
+  cities.forEach(scaleCity);
   const select = document.getElementById('city-select');
   const descEl = document.getElementById('city-desc');
   const listEl = document.getElementById('city-highlights');
@@ -46,6 +65,7 @@
   document.getElementById('menu-btn').addEventListener('click', () => {
     document.getElementById('finish').classList.remove('show');
     document.getElementById('touch-controls').classList.remove('show');
+    document.getElementById('ahead').classList.remove('show');
     document.getElementById('menu').classList.add('show');
     game.state = 'menu';
     renderCity(game.city || cities[0]);

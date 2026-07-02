@@ -82,6 +82,40 @@ class Game {
     this._checkHighlights();
     this._checkFinish();
     this._updateHud();
+    this._updateHeadsUp();
+  }
+
+  // The next thing to aim for: nearest unvisited highlight, or START once done.
+  _headsUpTarget() {
+    if (this.allVisited) {
+      return { x: this.track.start.x, y: this.track.start.y, name: 'START', home: true };
+    }
+    let best = null, bestD = Infinity;
+    for (const h of this.city.highlights) {
+      if (this.visited.has(h.id)) continue;
+      const d = Utils.dist(this.car.pos.x, this.car.pos.y, h.x, h.y);
+      if (d < bestD) { bestD = d; best = h; }
+    }
+    return best ? { x: best.x, y: best.y, name: best.name, dist: bestD } : null;
+  }
+
+  _updateHeadsUp() {
+    const target = this._headsUpTarget();
+    this._huTarget = target;
+    const el = document.getElementById('ahead');
+    if (!el) return;
+    if (!target) { el.classList.remove('show'); return; }
+    const d = Utils.dist(this.car.pos.x, this.car.pos.y, target.x, target.y);
+    const aheadRange = 1000;
+    if (d <= aheadRange) {
+      document.getElementById('ahead-name').textContent =
+        target.home ? 'Return to START' : target.name;
+      document.getElementById('ahead-dist').textContent = Math.round(d / 12) + ' m';
+      el.classList.add('show');
+      el.classList.toggle('near', d < 340);
+    } else {
+      el.classList.remove('show');
+    }
   }
 
   _checkHighlights() {
@@ -114,7 +148,7 @@ class Game {
     if (!this.allVisited) return;
     const d = Utils.dist(this.car.pos.x, this.car.pos.y,
       this.track.start.x, this.track.start.y);
-    if (d < 90) this._finish();
+    if (d < 110) this._finish();
   }
 
   total() { return this.elapsed + this.penaltyMs; }
@@ -138,6 +172,7 @@ class Game {
     this.state = 'finished';
     document.getElementById('hud').classList.remove('show');
     document.getElementById('touch-controls').classList.remove('show');
+    document.getElementById('ahead').classList.remove('show');
     const total = this.total();
     document.getElementById('finish-time').textContent = Utils.formatTime(total);
 
@@ -197,8 +232,46 @@ class Game {
     ctx.restore();
 
     // Screen-space overlays.
+    this._drawAheadArrow(ctx);
     this.minimap.draw(ctx, this.car, this.visited, this.vw);
     this._drawSpeedo(ctx);
+  }
+
+  // An edge-of-screen chevron pointing to the next target while it's off-screen,
+  // so on the bigger map you always know which way to head.
+  _drawAheadArrow(ctx) {
+    const target = this._huTarget;
+    if (!target) return;
+    const z = this.camera.zoom;
+    const sx = this.vw / 2 + (target.x - this.camera.x) * z;
+    const sy = this.vh / 2 + (target.y - this.camera.y) * z;
+    const margin = 58;
+    if (sx >= margin && sx <= this.vw - margin &&
+        sy >= margin && sy <= this.vh - margin) return; // on screen already
+
+    const cx = this.vw / 2, cy = this.vh / 2;
+    const dx = sx - cx, dy = sy - cy;
+    const halfW = this.vw / 2 - margin, halfH = this.vh / 2 - margin;
+    const scale = Math.min(halfW / (Math.abs(dx) || 1e-3), halfH / (Math.abs(dy) || 1e-3));
+    const ax = cx + dx * scale, ay = cy + dy * scale;
+    const ang = Math.atan2(dy, dx);
+
+    ctx.save();
+    ctx.translate(ax, ay);
+    // backing disc
+    ctx.beginPath();
+    ctx.arc(0, 0, 22, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(18,22,28,0.72)';
+    ctx.fill();
+    ctx.rotate(ang);
+    ctx.beginPath();
+    ctx.moveTo(15, 0); ctx.lineTo(-8, -11); ctx.lineTo(-2, 0); ctx.lineTo(-8, 11);
+    ctx.closePath();
+    ctx.fillStyle = target.home ? '#5f8bff' : '#ffcf3a';
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+    ctx.lineWidth = 2;
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
   }
 
   _drawSkids(ctx) {
