@@ -63,9 +63,20 @@ class Game {
   _frame(t) {
     const dt = Math.min(0.033, (t - this.lastT) / 1000 || 0);
     this.lastT = t;
+    // The clock runs whenever a run is underway — including while a quiz is
+    // open, so answering quickly (and not fumbling questions) matters.
+    if (this.started && (this.state === 'driving' || this.state === 'quiz')) {
+      this.elapsed += dt * 1000;
+    }
     if (this.state === 'driving') this._update(dt, t);
+    else if (this.state === 'quiz') this._updateQuizTimer();
     this._render(t);
     requestAnimationFrame((tt) => this._frame(tt));
+  }
+
+  _updateQuizTimer() {
+    const el = document.getElementById('quiz-timer');
+    if (el) el.textContent = Utils.formatTime(this.total());
   }
 
   _update(dt, t) {
@@ -75,7 +86,6 @@ class Game {
 
     // Start the clock once the car actually moves.
     if (!this.started && this.car.speed > 8) this.started = true;
-    if (this.started) this.elapsed += dt * 1000;
 
     this.camera.follow(this.car.pos, this.car.vel, dt);
 

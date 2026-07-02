@@ -139,6 +139,15 @@ button.primary:active, button.secondary:active { transform: scale(0.98); }
 
 /* ---- quiz ---- */
 .quiz-panel { max-width: 480px; }
+.quiz-timerbar {
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums;
+  color: var(--accent); margin-bottom: 10px;
+}
+.quiz-timernote {
+  font-size: 12px; font-weight: 600; color: #ff9a8a;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
 .quiz-blurb { color: #cdd9e3; font-size: 14px; line-height: 1.55; margin-bottom: 16px; }
 .quiz-question { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
 .quiz-options { display: flex; flex-direction: column; gap: 10px; }

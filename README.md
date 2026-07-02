@@ -26,7 +26,8 @@ python3 -m http.server 8000   # then visit http://localhost:8000
 
 Slow down inside a highlight's ring to trigger its question — answer correctly to
 drive on. Each visit draws a random question from that highlight's pool (options
-shuffled), and every wrong answer adds +5 seconds to your time.
+shuffled). The clock keeps running while the quiz is open, and every wrong answer
+adds +5 seconds on top — so answer fast and know your facts.
 
 ## How it works
 

@@ -16,8 +16,9 @@ game is data-driven so more cities can be added later.
 - Visit every highlight (any order). Reaching one and slowing down opens a quiz.
 - Each highlight has a **pool** of questions; one is picked at random per visit
   and the answer options are shuffled, so runs can't be memorised.
-- Answer correctly to unlock the highlight. Every wrong answer adds a **+5s time
-  penalty** (shown live and broken out on the finish screen) so facts pay off.
+- Answer correctly to unlock the highlight. **The clock keeps running while the
+  quiz is open** (a live timer is shown on the panel), so answer quickly — and
+  every wrong answer adds a **+5s penalty** on top, so facts pay off.
 - Once all highlights are visited, drive back to START to finish. Best time
   (drive time + penalties) is saved per city. Cities shipped: Bergen, Stavanger.
 
