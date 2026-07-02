@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>FerieSpill — City Explorer Racing</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-box">
+      <div class="hud-row"><span class="hud-label">Time</span>
+        <span id="hud-time" class="hud-value">0:00.00</span></div>
+      <div class="hud-row"><span class="hud-label">Highlights</span>
+        <span id="hud-progress" class="hud-value">0 / 0</span></div>
+      <div id="hud-hint" class="hud-hint">Visit the numbered highlights</div>
+    </div>
+  </div>
+
+  <!-- On-screen touch controls -->
+  <div id="touch-controls">
+    <div class="touch-cluster left">
+      <button id="btn-left" class="tbtn">◀</button>
+      <button id="btn-right" class="tbtn">▶</button>
+    </div>
+    <div class="touch-cluster right">
+      <button id="btn-brake" class="tbtn small">⎵</button>
+      <button id="btn-down" class="tbtn">▼</button>
+      <button id="btn-up" class="tbtn gas">▲</button>
+    </div>
+  </div>
+
+  <!-- Start menu -->
+  <div id="menu" class="overlay show">
+    <div class="panel">
+      <h1>FerieSpill</h1>
+      <p class="tagline">Explore a city and the areas around it — visit every
+        highlight, answer a question at each, then race back to START.</p>
+
+      <label class="field">
+        <span>Destination</span>
+        <select id="city-select"></select>
+      </label>
+      <p id="city-desc" class="city-desc"></p>
+      <p id="city-best" class="city-best"></p>
+      <ul id="city-highlights" class="highlight-list"></ul>
+
+      <div class="controls-help">
+        <strong>Controls:</strong> Arrows / WASD to drive · Space to handbrake
+        (drift!). Slow down inside a highlight ring to trigger its question.
+      </div>
+
+      <button id="start-btn" class="primary">Start driving</button>
+    </div>
+  </div>
+
+  <!-- Finish screen -->
+  <div id="finish" class="overlay">
+    <div class="panel">
+      <h1>Tour complete! 🏁</h1>
+      <p class="finish-time-label">Your time</p>
+      <p id="finish-time" class="finish-time">0:00.00</p>
+      <p class="finish-best">Best: <span id="finish-best">—</span></p>
+      <div class="btn-row">
+        <button id="again-btn" class="primary">Race again</button>
+        <button id="menu-btn" class="secondary">Change city</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz modal -->
+  <div id="quiz" class="overlay">
+    <div class="panel quiz-panel">
+      <h2 id="quiz-title">Highlight</h2>
+      <p id="quiz-blurb" class="quiz-blurb"></p>
+      <p id="quiz-question" class="quiz-question"></p>
+      <div id="quiz-options" class="quiz-options"></div>
+      <p id="quiz-feedback" class="quiz-feedback"></p>
+    </div>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/cities/bergen.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/car.js"></script>
+  <script src="js/track.js"></script>
+  <script src="js/minimap.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
